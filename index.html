@@ -1,98 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neuma Video Player</title>
-    <style>
-        body {
-            text-align: center;
-            background-color: #121212;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-
-        #video-container {
-            position: relative;
-            width: 80%;
-            max-width: 800px;
-            margin: auto;
-        }
-
-        video {
-            width: 100%;
-            height: auto;
-        }
-
-        #audio-fader {
-            width: 100%;
-            margin-top: 10px;
-            appearance: none;
-            height: 8px;
-            background: #ffffff;
-            border-radius: 4px;
-            outline: none;
-            opacity: 0.8;
-            transition: 0.3s;
-        }
-
-        #audio-fader:hover {
-            opacity: 1;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neuma Video Player</title>
+  <style>
+    body {
+      text-align: center;
+      background-color: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    #video-container {
+      position: relative;
+      width: 80%;
+      max-width: 800px;
+      margin: auto;
+    }
+    video {
+      width: 100%;
+      height: auto;
+    }
+    #audio-fader {
+      width: 100%;
+      margin-top: 10px;
+      appearance: none;
+      height: 8px;
+      background: #ffffff;
+      border-radius: 4px;
+      outline: none;
+      opacity: 0.8;
+      transition: 0.3s;
+    }
+    #audio-fader:hover {
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
 
-    <div id="video-container">
-        <video id="video-player" controls>
-            <source src="https://santiagobranda.github.io/neuma-fader/teaser.mp4"  type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        
-        <input type="range" id="audio-fader" min="0" max="1" step="0.01" value="0.5">
-    </div>
+  <div id="video-container">
+    <video id="video-player" controls>
+      <source src="https://santiagobranda.github.io/neuma-fader/teaser.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    
+    <input type="range" id="audio-fader" min="0" max="1" step="0.01" value="0.5">
+  </div>
 
-    <audio id="music-audio" src="https://santiagobranda.github.io/neuma-fader/musica.mp3"></audio>
-    <audio id="sfx-audio" src="https://santiagobranda.github.io/neuma-fader/sfx.mp3"></audio>
+  <audio id="music-audio" src="https://santiagobranda.github.io/neuma-fader/musica.mp3"></audio>
+  <audio id="sfx-audio" src="https://santiagobranda.github.io/neuma-fader/sfx.mp3"></audio>
 
-    <script>
-        const video = document.getElementById("video-player");
-        const musicAudio = document.getElementById("music-audio");
-        const sfxAudio = document.getElementById("sfx-audio");
-        const audioFader = document.getElementById("audio-fader");
+  <script>
+    const video = document.getElementById("video-player");
+    const musicAudio = document.getElementById("music-audio");
+    const sfxAudio = document.getElementById("sfx-audio");
+    const audioFader = document.getElementById("audio-fader");
 
-        function syncAudioWithVideo() {
-            musicAudio.currentTime = video.currentTime;
-            sfxAudio.currentTime = video.currentTime;
-        }
+    // Full synchronization when seeking
+    function fullSync() {
+      musicAudio.currentTime = video.currentTime;
+      sfxAudio.currentTime = video.currentTime;
+    }
 
-        video.addEventListener("play", () => {
-            musicAudio.play();
-            sfxAudio.play();
-        });
+    video.addEventListener("play", () => {
+      musicAudio.play();
+      sfxAudio.play();
+    });
 
-        video.addEventListener("pause", () => {
-            musicAudio.pause();
-            sfxAudio.pause();
-        });
+    video.addEventListener("pause", () => {
+      musicAudio.pause();
+      sfxAudio.pause();
+    });
 
-        video.addEventListener("seeked", syncAudioWithVideo);
-        video.addEventListener("timeupdate", syncAudioWithVideo);
+    video.addEventListener("seeked", fullSync);
+    
+    video.addEventListener("ended", () => {
+      musicAudio.pause();
+      musicAudio.currentTime = 0;
+      sfxAudio.pause();
+      sfxAudio.currentTime = 0;
+    });
 
-        video.addEventListener("ended", () => {
-            musicAudio.pause();
-            musicAudio.currentTime = 0;
-            sfxAudio.pause();
-            sfxAudio.currentTime = 0;
-        });
+    // Tolerance-based synchronization during timeupdate
+    video.addEventListener("timeupdate", () => {
+      const tolerance = 0.15; // Only update if the drift is greater than 0.15 seconds
+      if (Math.abs(musicAudio.currentTime - video.currentTime) > tolerance) {
+          musicAudio.currentTime = video.currentTime;
+      }
+      if (Math.abs(sfxAudio.currentTime - video.currentTime) > tolerance) {
+          sfxAudio.currentTime = video.currentTime;
+      }
+    });
 
-        audioFader.addEventListener("input", () => {
-            let faderValue = audioFader.value;
-            musicAudio.volume = 1 - faderValue;  // Music fades out when moving right
-            sfxAudio.volume = faderValue;  // Sound design fades in when moving right
-        });
-
-    </script>
+    // Audio Fader Logic: Adjust volumes based on fader value
+    audioFader.addEventListener("input", () => {
+      let faderValue = parseFloat(audioFader.value);
+      musicAudio.volume = 1 - faderValue;
+      sfxAudio.volume = faderValue;
+    });
+  </script>
 
 </body>
 </html>
+
