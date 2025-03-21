@@ -17,9 +17,11 @@
       max-width: 800px;
       margin: auto;
     }
-    video {
+    /* The Vimeo player is embedded as an iframe */
+    iframe {
       width: 100%;
-      height: auto;
+      height: 450px;
+      border: none;
     }
     #audio-fader {
       width: 100%;
@@ -40,66 +42,72 @@
 <body>
 
   <div id="video-container">
-    <video id="video-player" controls>
-      <source src="https://santiagobranda.github.io/neuma-fader/teaser.mp4" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
+    <!-- Vimeo embed -->
+    <iframe id="vimeo-player" 
+      src="https://player.vimeo.com/video/1067394841?api=1" 
+      allow="autoplay; fullscreen" allowfullscreen></iframe>
     
-    <!-- Fader's default value is set to 0.5 (center) -->
+    <!-- Fader (default value is 0.5 for an equal mix) -->
     <input type="range" id="audio-fader" min="0" max="1" step="0.01" value="0.5">
   </div>
 
+  <!-- Audio files hosted on GitHub (or your preferred host) -->
   <audio id="music-audio" src="https://santiagobranda.github.io/neuma-fader/musica.mp3"></audio>
   <audio id="sfx-audio" src="https://santiagobranda.github.io/neuma-fader/sfx.mp3"></audio>
 
+  <!-- Include the Vimeo Player API -->
+  <script src="https://player.vimeo.com/api/player.js"></script>
   <script>
-    const video = document.getElementById("video-player");
+    // Get elements and create a Vimeo Player instance
+    const vimeoIframe = document.getElementById("vimeo-player");
+    const player = new Vimeo.Player(vimeoIframe);
     const musicAudio = document.getElementById("music-audio");
     const sfxAudio = document.getElementById("sfx-audio");
     const audioFader = document.getElementById("audio-fader");
 
-    // Full synchronization when seeking
-    function fullSync() {
-      musicAudio.currentTime = video.currentTime;
-      sfxAudio.currentTime = video.currentTime;
-    }
+    const tolerance = 0.15; // seconds tolerance for synchronization
 
-    video.addEventListener("play", () => {
+    // Synchronize audio with Vimeo events
+    player.on('play', () => {
       musicAudio.play();
       sfxAudio.play();
     });
 
-    video.addEventListener("pause", () => {
+    player.on('pause', () => {
       musicAudio.pause();
       sfxAudio.pause();
     });
 
-    video.addEventListener("seeked", fullSync);
-    
-    video.addEventListener("ended", () => {
+    player.on('seeked', (data) => {
+      // data.seconds contains the new time
+      musicAudio.currentTime = data.seconds;
+      sfxAudio.currentTime = data.seconds;
+    });
+
+    player.on('timeupdate', (data) => {
+      const currentTime = data.seconds;
+      if (Math.abs(musicAudio.currentTime - currentTime) > tolerance) {
+        musicAudio.currentTime = currentTime;
+      }
+      if (Math.abs(sfxAudio.currentTime - currentTime) > tolerance) {
+        sfxAudio.currentTime = currentTime;
+      }
+    });
+
+    player.on('ended', () => {
       musicAudio.pause();
       musicAudio.currentTime = 0;
       sfxAudio.pause();
       sfxAudio.currentTime = 0;
     });
 
-    // Tolerance-based synchronization during timeupdate
-    video.addEventListener("timeupdate", () => {
-      const tolerance = 0.15; // Only update if the drift is greater than 0.15 seconds
-      if (Math.abs(musicAudio.currentTime - video.currentTime) > tolerance) {
-          musicAudio.currentTime = video.currentTime;
-      }
-      if (Math.abs(sfxAudio.currentTime - video.currentTime) > tolerance) {
-          sfxAudio.currentTime = video.currentTime;
-      }
-    });
-
-    // Updated Audio Fader Logic:
-    // - When fader <= 0.5: Music remains at 0.5; SFX volume scales from 0 (at 0) to 0.5 (at 0.5)
-    // - When fader > 0.5: SFX remains at 0.5; Music volume scales from 0.5 (at 0.5) to 0 (at 1)
+    // Audio fader logic:
+    // When fader is at 0.5, both audio tracks play at 0.5 volume.
+    // Moving left: music stays at 0.5 while sfx fades out.
+    // Moving right: sfx stays at 0.5 while music fades out.
     audioFader.addEventListener("input", () => {
       let faderValue = parseFloat(audioFader.value);
-     if (faderValue <= 0.5) {
+      if (faderValue <= 0.5) {
         musicAudio.volume = 0.5;
         sfxAudio.volume = (faderValue / 0.5) * 0.5;
       } else {
@@ -111,4 +119,3 @@
 
 </body>
 </html>
-
