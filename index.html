@@ -130,6 +130,10 @@
         musicAudio.volume = ((1 - faderValue) / 0.5) * 0.5;
       }
     });
+
+
+    // ←––––– NEW: initialize volumes based on starting position –––––→
+    audioFader.dispatchEvent(new Event('input'));
   </script>
 
 </body>
