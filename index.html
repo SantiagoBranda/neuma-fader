@@ -16,10 +16,16 @@
   <div class="content-wrapper">
     <!-- Video Container -->
     <div id="video-container">
-      <video id="video-player" muted playsinline>
+      <video id="video-player" muted playsinline preload="auto">
         <source src="assets/video/teaser2.mp4" type="video/mp4">
         Tu navegador no soporta la reproducción de video HTML5.
       </video>
+      
+      <!-- Loading Spinner -->
+      <div id="loading-spinner" class="loading-overlay">
+        <div class="spinner"></div>
+      </div>
+      
       <!-- Custom Play/Pause Button -->
       <div id="play-pause-btn" class="play-pause-overlay">
         <svg id="play-icon" width="80" height="80" viewBox="0 0 24 24" fill="white">

@@ -53,6 +53,48 @@ video {
   pointer-events: none;
 }
 
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  z-index: 15;
+  transition: opacity 0.3s ease;
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(181, 207, 207, 0.2);
+  border-top: 3px solid #b5cfcf;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* When loading, hide play/pause button */
+.loading-overlay:not(.hidden) ~ .play-pause-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Play/Pause Overlay Button */
 .play-pause-overlay {
   position: absolute;

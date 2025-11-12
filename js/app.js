@@ -10,15 +10,71 @@ const audioFader = document.getElementById("audio-fader");
 const videoContainer = document.getElementById("video-container");
 const playIcon = document.getElementById("play-icon");
 const pauseIcon = document.getElementById("pause-icon");
+const loadingSpinner = document.getElementById("loading-spinner");
+
+// Loading state
+let isVideoReady = false;
 
 // ========================================
-// PRELOAD
+// PRELOAD & LOADING
 // ========================================
 
 // Set preload for better performance
 video.preload = "auto";
 musicAudio.preload = "auto";
 sfxAudio.preload = "auto";
+
+/**
+ * Show loading spinner
+ */
+function showLoading() {
+  if (loadingSpinner) {
+    loadingSpinner.classList.remove("hidden");
+    console.log("⏳ Loading...");
+  }
+}
+
+/**
+ * Hide loading spinner
+ */
+function hideLoading() {
+  if (loadingSpinner) {
+    loadingSpinner.classList.add("hidden");
+    isVideoReady = true;
+    console.log("✅ Video ready");
+  }
+}
+
+/**
+ * Handle video loading states
+ */
+video.addEventListener("loadstart", () => {
+  console.log("📥 Video loading started...");
+  showLoading();
+});
+
+video.addEventListener("canplay", () => {
+  console.log("✅ Video can play");
+  hideLoading();
+});
+
+video.addEventListener("canplaythrough", () => {
+  console.log("✅ Video can play through");
+  hideLoading();
+});
+
+video.addEventListener("waiting", () => {
+  console.log("⏸️ Video buffering...");
+  showLoading();
+  // Pause audio while buffering
+  musicAudio.pause();
+  sfxAudio.pause();
+});
+
+video.addEventListener("playing", () => {
+  console.log("▶️ Video playing");
+  hideLoading();
+});
 
 // ========================================
 // CUSTOM VIDEO CONTROLS
@@ -43,6 +99,12 @@ function updatePlayPauseUI() {
  * Toggle play/pause
  */
 function togglePlayPause() {
+  // Don't allow play if video is not ready
+  if (!isVideoReady && video.paused) {
+    console.log("⚠️ Video not ready yet");
+    return;
+  }
+  
   if (video.paused) {
     video.play();
   } else {
@@ -84,6 +146,13 @@ function fullSync() {
  */
 video.addEventListener("play", () => {
   console.log("▶️ Play triggered");
+  
+  // Only play if video is ready
+  if (!isVideoReady) {
+    console.log("⚠️ Video not ready, pausing...");
+    video.pause();
+    return;
+  }
   
   // Sync before playing
   fullSync();
