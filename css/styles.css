@@ -1,0 +1,290 @@
+/* ========================================
+   Neuma Fader - Styles
+   ======================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  text-align: center;
+  background-color: #121212;
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 0;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden; /* Elimina scroll del body */
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+  overflow: hidden; /* Elimina scroll del wrapper */
+}
+
+/* Video Container */
+#video-container {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  max-height: calc(100vh - 160px); /* Deja espacio para el fader y padding */
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  background-color: #000;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Play/Pause Overlay Button */
+.play-pause-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  transition: opacity 0.3s, background 0.3s;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.play-pause-overlay svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+#video-container:hover .play-pause-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Hide overlay when video is playing (except on hover) */
+#video-container.playing .play-pause-overlay {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+#video-container.playing:hover .play-pause-overlay,
+#video-container.playing video:hover ~ .play-pause-overlay {
+  opacity: 1;
+}
+
+/* Fader Controls Container */
+.fader-controls {
+  width: 100%;
+  max-width: 960px;
+  margin: 30px auto 0 auto;
+  padding: 0 10px;
+  position: relative;
+  z-index: 20;
+}
+
+/* Audio Fader */
+#audio-fader {
+  width: 100%;
+  display: block;
+  appearance: none;
+  height: 10px;
+  background: linear-gradient(to right, #6d87b6 0%, #888 50%, #8b6db6 100%);
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: opacity 0.2s;
+}
+
+#audio-fader:hover {
+  opacity: 0.9;
+}
+
+#audio-fader:active {
+  opacity: 1;
+}
+
+/* Styling for WebKit browsers (Chrome, Safari, Edge) */
+#audio-fader::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 44px;
+  height: 44px;
+  background: #333333 url('../assets/images/N16FF.png') no-repeat center;
+  background-size: contain;
+  border: 2px solid #b5cfcf;
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s;
+}
+
+#audio-fader::-webkit-slider-thumb:hover {
+  width: 48px;
+  height: 48px;
+  box-shadow: 0 4px 12px rgba(109, 135, 182, 0.5);
+}
+
+#audio-fader::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  width: 50px;
+  height: 50px;
+}
+
+/* Styling for Firefox */
+#audio-fader::-moz-range-thumb {
+  width: 44px;
+  height: 44px;
+  background: #333333 url('../assets/images/N16FF.png') no-repeat center;
+  background-size: contain;
+  border: 2px solid #b5cfcf;
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s;
+}
+
+#audio-fader::-moz-range-thumb:hover {
+  width: 48px;
+  height: 48px;
+  box-shadow: 0 4px 12px rgba(109, 135, 182, 0.5);
+}
+
+#audio-fader::-moz-range-thumb:active {
+  cursor: grabbing;
+  width: 50px;
+  height: 50px;
+}
+
+/* ========================================
+   RESPONSIVE - Mobile First
+   ======================================== */
+
+/* Mobile devices (portrait phones, less than 576px) */
+@media (max-width: 575.98px) {
+  body {
+    overflow: hidden;
+  }
+
+  .content-wrapper {
+    padding: 15px 10px;
+  }
+
+  #video-container {
+    border-radius: 8px;
+    max-height: calc(100vh - 140px);
+  }
+
+  .fader-controls {
+    margin-top: 25px;
+  }
+
+  /* Fader más grande y táctil en móviles */
+  #audio-fader {
+    height: 14px;
+    margin-bottom: 25px;
+  }
+
+  #audio-fader::-webkit-slider-thumb {
+    width: 44px;
+    height: 44px;
+  }
+
+  #audio-fader::-webkit-slider-thumb:hover,
+  #audio-fader::-webkit-slider-thumb:active {
+    width: 48px;
+    height: 48px;
+  }
+
+  #audio-fader::-moz-range-thumb {
+    width: 44px;
+    height: 44px;
+  }
+
+  #audio-fader::-moz-range-thumb:hover,
+  #audio-fader::-moz-range-thumb:active {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Tablets (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  #audio-fader {
+    height: 12px;
+  }
+
+  #audio-fader::-webkit-slider-thumb,
+  #audio-fader::-moz-range-thumb {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Small laptops and tablets (768px and up) */
+@media (min-width: 768px) {
+  .fader-controls {
+    padding: 0 20px;
+  }
+}
+
+/* Large devices (desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .content-wrapper {
+    padding: 40px;
+  }
+
+  .fader-controls {
+    margin-top: 40px;
+  }
+}
+
+/* Touch device improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Para dispositivos táctiles, hacer todos los controles más grandes */
+  #audio-fader {
+    height: 16px;
+  }
+
+  #audio-fader::-webkit-slider-thumb,
+  #audio-fader::-moz-range-thumb {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 767.98px) and (orientation: landscape) {
+  .content-wrapper {
+    padding: 10px;
+  }
+
+  #video-container {
+    max-height: calc(100vh - 100px);
+  }
+
+  .subtitle {
+    margin-bottom: 15px;
+  }
+
+  .fader-controls {
+    margin-top: 15px;
+  }
+}

@@ -1,0 +1,66 @@
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Node.js (if you add npm dependencies later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Python (if you use Python server)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build outputs (if you add a build process)
+dist/
+build/
+out/
+
+# Media files (uncomment if you don't want to track large media)
+# assets/video/*.mp4
+# assets/video/*.webm
+# assets/audio/*.mp3
+# assets/audio/*.wav
+# assets/audio/*.ogg
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Environment variables
+.env
+.env.local
+.env.*.local
