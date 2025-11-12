@@ -21,11 +21,21 @@ let isVideoReady = false;
 // ========================================
 
 /**
- * Detect if device is mobile
+ * Detect if device is mobile (improved detection)
  */
 function isMobileDevice() {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-    || window.innerWidth <= 768;
+  // Check user agent
+  const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  const isMobileUA = mobileRegex.test(navigator.userAgent);
+  
+  // Check touch capability
+  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // Check screen width (only if touch is available)
+  const isSmallScreen = window.innerWidth <= 768;
+  
+  // Mobile if: (has touch AND small screen) OR mobile user agent
+  return (hasTouch && isSmallScreen) || isMobileUA;
 }
 
 /**
