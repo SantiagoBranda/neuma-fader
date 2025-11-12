@@ -4,6 +4,7 @@
 
 // DOM Elements
 const video = document.getElementById("video-player");
+const videoSource = document.getElementById("video-source");
 const musicAudio = document.getElementById("music-audio");
 const sfxAudio = document.getElementById("sfx-audio");
 const audioFader = document.getElementById("audio-fader");
@@ -14,6 +15,37 @@ const loadingSpinner = document.getElementById("loading-spinner");
 
 // Loading state
 let isVideoReady = false;
+
+// ========================================
+// DEVICE DETECTION & VIDEO SELECTION
+// ========================================
+
+/**
+ * Detect if device is mobile
+ */
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+    || window.innerWidth <= 768;
+}
+
+/**
+ * Load appropriate video based on device
+ */
+function loadVideoForDevice() {
+  const isMobile = isMobileDevice();
+  const videoPath = isMobile 
+    ? 'assets/video/teaser.mp4'     // 18 MB para mobile
+    : 'assets/video/teaser2.mp4';   // 44 MB para desktop
+  
+  videoSource.src = videoPath;
+  video.load(); // Reload video with new source
+  
+  console.log(`📱 Device: ${isMobile ? 'Mobile' : 'Desktop'}`);
+  console.log(`🎬 Loading video: ${videoPath}`);
+}
+
+// Load video on init
+loadVideoForDevice();
 
 // ========================================
 // PRELOAD & LOADING

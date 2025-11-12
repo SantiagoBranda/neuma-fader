@@ -16,8 +16,9 @@
   <div class="content-wrapper">
     <!-- Video Container -->
     <div id="video-container">
-      <video id="video-player" muted playsinline preload="auto">
-        <source src="assets/video/teaser2.mp4" type="video/mp4">
+      <video id="video-player" muted playsinline preload="metadata">
+        <!-- El src se define dinámicamente por JavaScript según el dispositivo -->
+        <source id="video-source" src="" type="video/mp4">
         Tu navegador no soporta la reproducción de video HTML5.
       </video>
       
