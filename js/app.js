@@ -247,6 +247,113 @@ audioFader.addEventListener("input", () => {
 });
 
 // ========================================
+// FADER HINT (burbuja que indica el control)
+// ========================================
+
+let faderHint = null;
+let faderInteracted = false;
+let faderHintTimeout = null;
+let videoStarted = false; // Track if video has started playing
+
+function createFaderHint() {
+  const container = document.querySelector('.fader-controls');
+  if (!container || !audioFader) return null;
+
+  // Prevent duplicate
+  if (container.querySelector('.fader-hint')) {
+    faderHint = container.querySelector('.fader-hint');
+    return faderHint;
+  }
+
+  // Create hint structure with better text
+  const hint = document.createElement('div');
+  hint.className = 'fader-hint pulsing';
+  
+  hint.innerHTML = `
+    <div class="fader-hint-bubble">
+      <span class="fader-hint-label">MUSIC</span>
+      <svg class="fader-hint-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h18m-7.5-12L21 9m0 0L16.5 4.5M21 9H3" />
+      </svg>
+      <span class="fader-hint-separator">Slide to mix</span>
+      <svg class="fader-hint-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h18m-7.5-12L21 9m0 0L16.5 4.5M21 9H3" />
+      </svg>
+      <span class="fader-hint-label">SFX</span>
+      <div class="fader-hint-arrow"></div>
+    </div>
+  `;
+  
+  container.appendChild(hint);
+  faderHint = hint;
+  return hint;
+}
+
+function updateFaderHintPosition() {
+  if (!faderHint || !audioFader) return;
+  const rect = audioFader.getBoundingClientRect();
+  const containerRect = audioFader.parentElement.getBoundingClientRect();
+  const min = parseFloat(audioFader.min) || 0;
+  const max = parseFloat(audioFader.max) || 1;
+  const val = parseFloat(audioFader.value);
+  const pct = (val - min) / (max - min);
+
+  // Calculate left inside container (center of thumb)
+  const left = rect.left - containerRect.left + pct * rect.width;
+  faderHint.style.left = `${left}px`;
+}
+
+function showFaderHint() {
+  if (!faderHint) createFaderHint();
+  if (!faderHint || faderInteracted) return;
+  updateFaderHintPosition();
+  requestAnimationFrame(() => faderHint.classList.add('visible'));
+}
+
+function hideFaderHint() {
+  if (!faderHint) return;
+  faderHint.classList.remove('visible');
+  faderHint.classList.remove('pulsing');
+}
+
+function scheduleFaderHint(delay = 6000) {
+  if (faderInteracted) return;
+  // create early so it exists for positioning
+  createFaderHint();
+  clearTimeout(faderHintTimeout);
+  faderHintTimeout = setTimeout(() => {
+    if (!faderInteracted) showFaderHint();
+  }, delay);
+}
+
+function onFaderInteraction() {
+  faderInteracted = true;
+  clearTimeout(faderHintTimeout);
+  hideFaderHint();
+}
+
+// Hide hint on user actions
+audioFader.addEventListener('mousedown', onFaderInteraction);
+audioFader.addEventListener('touchstart', onFaderInteraction);
+audioFader.addEventListener('input', () => {
+  onFaderInteraction();
+  if (faderHint && faderHint.classList.contains('visible')) updateFaderHintPosition();
+});
+
+// Keep position updated on resize
+window.addEventListener('resize', () => {
+  if (faderHint && faderHint.classList.contains('visible')) updateFaderHintPosition();
+});
+
+// Schedule hint 6 seconds AFTER video starts playing (not on page load)
+video.addEventListener('play', () => {
+  if (!videoStarted && !faderInteracted) {
+    videoStarted = true;
+    scheduleFaderHint(6000); // 6 seconds after first play
+  }
+});
+
+// ========================================
 // INITIALIZATION
 // ========================================
 
