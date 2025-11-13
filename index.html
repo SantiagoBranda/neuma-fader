@@ -7,81 +7,51 @@
   <meta name="theme-color" content="#121212">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="screen-orientation" content="landscape">
-  
   <title>Neuma Fader</title>
-  
-  <!-- Styles -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-
   <div class="content-wrapper">
-    <!-- Video Container -->
     <div id="video-container">
       <video id="video-player" muted playsinline preload="metadata">
-        <!-- El src se define dinámicamente por JavaScript según el dispositivo -->
         <source id="video-source" src="" type="video/mp4">
         Tu navegador no soporta la reproducción de video HTML5.
       </video>
       
-      <!-- Loading Spinner -->
       <div id="loading-spinner" class="loading-overlay">
         <div class="spinner"></div>
       </div>
       
-      <!-- Custom Play/Pause Button -->
       <div id="play-pause-btn" class="play-pause-overlay">
         <svg id="play-icon" width="80" height="80" viewBox="0 0 24 24" fill="white">
           <path d="M8 5v14l11-7z"/>
         </svg>
-        <svg id="pause-icon" width="80" height="80" viewBox="0 0 24 24" fill="white" style="display: none;">
-          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-        </svg>
       </div>
       
-      <!-- Fullscreen Button -->
       <button id="fullscreen-btn" class="fullscreen-button" aria-label="Pantalla completa">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
           <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
         </svg>
       </button>
       
-      <!-- Fader Controls (shown in fullscreen) -->
+      <div class="video-timeline" id="video-timeline">
+        <div class="timeline-buffered" id="timeline-buffered"></div>
+        <div class="timeline-progress" id="timeline-progress"></div>
+        <div class="timeline-time-tooltip" id="timeline-tooltip">0:00</div>
+      </div>
+      
       <div class="fader-controls-fullscreen">
-        <input 
-          type="range" 
-          id="audio-fader-fullscreen" 
-          min="0" 
-          max="1" 
-          step="0.01" 
-          value="0.5"
-          aria-label="Audio mix fader"
-        >
+        <input type="range" id="audio-fader-fullscreen" min="0" max="1" step="0.01" value="0.5" aria-label="Audio mix fader">
       </div>
     </div>
 
-    <!-- Fader Controls (normal view) -->
     <div class="fader-controls">
-      <!-- Audio Fader Slider -->
-      <input 
-        type="range" 
-        id="audio-fader" 
-        min="0" 
-        max="1" 
-        step="0.01" 
-        value="0.5"
-        aria-label="Audio mix fader"
-      >
+      <input type="range" id="audio-fader" min="0" max="1" step="0.01" value="0.5" aria-label="Audio mix fader">
     </div>
   </div>
 
-  <!-- Audio Elements (hidden) -->
   <audio id="music-audio" src="assets/audio/musica1.mp3" preload="auto"></audio>
   <audio id="sfx-audio" src="assets/audio/sfx1.mp3" preload="auto"></audio>
-
-  <!-- Application Script -->
   <script src="js/app.js"></script>
-
 </body>
 </html>
-

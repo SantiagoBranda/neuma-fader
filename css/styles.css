@@ -163,6 +163,10 @@ video {
   transition: opacity 1s;
 }
 
+#video-container.playing.hide-controls .video-timeline {
+  opacity: 0.3;
+}
+
 /* Show on hover/touch */
 #video-container.playing:hover .play-pause-overlay,
 #video-container.playing video:hover ~ .play-pause-overlay {
@@ -209,10 +213,129 @@ video {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
+/* ========================================
+   VIDEO TIMELINE CONTROLS
+   ======================================== */
+
+/* Timeline (works for both normal and fullscreen) */
+.video-timeline {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  z-index: 15;
+  transition: height 0.2s ease, opacity 0.3s ease;
+  opacity: 0.7;
+}
+
+/* Increase touch area with invisible padding */
+.video-timeline::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  left: 0;
+  right: 0;
+  cursor: pointer;
+}
+
+.video-timeline:hover {
+  height: 6px;
+  opacity: 1;
+}
+
+.timeline-buffered {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  width: 0%;
+  pointer-events: none;
+}
+
+.timeline-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #00ffc3 0%, #04b98f 100%);
+  width: 0%;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(0, 255, 195, 0.5);
+}
+
+/* Timeline Time Tooltip */
+.timeline-time-tooltip {
+  position: absolute;
+  top: -35px;
+  left: 0;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #00ffc3;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+  border: 1px solid rgba(0, 255, 195, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+.video-timeline:hover .timeline-time-tooltip {
+  opacity: 1;
+}
+
+/* Fullscreen adjustments */
+#video-container:fullscreen .video-timeline {
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 800px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  opacity: 1;
+}
+
+/* Larger touch area in fullscreen */
+#video-container:fullscreen .video-timeline::before {
+  top: -15px;
+  bottom: -15px;
+}
+
+#video-container:fullscreen .video-timeline:hover {
+  height: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+
+#video-container:fullscreen .timeline-buffered,
+#video-container:fullscreen .timeline-progress {
+  border-radius: 3px;
+}
+
+#video-container:fullscreen .timeline-progress {
+  box-shadow: 0 0 12px rgba(0, 255, 195, 0.6);
+}
+
+#video-container:fullscreen .video-timeline:hover .timeline-progress {
+  box-shadow: 0 0 16px rgba(0, 255, 195, 0.8);
+}
+
 /* Fader Controls in Fullscreen */
 .fader-controls-fullscreen {
   position: absolute;
-  bottom: 60px;
+  top: 30px;
   left: 50%;
   transform: translate3d(-50%, 0, 0); /* Use 3D transform for GPU */
   width: 80%;
