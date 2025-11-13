@@ -639,14 +639,7 @@ document.addEventListener('fullscreenchange', () => {
 window.addEventListener('orientationchange', () => {
   if (document.fullscreenElement) {
     console.log("📱 Orientation changed in fullscreen");
-    // Small delay to let browser finish orientation change
-    setTimeout(() => {
-      // Force layout update
-      videoContainer.style.transform = 'none';
-      setTimeout(() => {
-        videoContainer.style.transform = '';
-      }, 50);
-    }, 100);
+    // The CSS will handle the layout automatically
   }
 });
 
@@ -654,6 +647,7 @@ window.addEventListener('orientationchange', () => {
 window.addEventListener('resize', () => {
   if (document.fullscreenElement) {
     console.log("📐 Resize detected in fullscreen");
+    // The CSS will handle the layout automatically
   }
 });
 
