@@ -196,6 +196,16 @@ video.addEventListener("play", () => {
     return;
   }
   
+  // Load audios if not loaded (desktop fix)
+  if (musicAudio.readyState < 2) {
+    console.log("📥 Loading music audio...");
+    musicAudio.load();
+  }
+  if (sfxAudio.readyState < 2) {
+    console.log("📥 Loading SFX audio...");
+    sfxAudio.load();
+  }
+  
   // Sync before playing
   fullSync();
   

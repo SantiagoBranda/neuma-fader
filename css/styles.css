@@ -232,7 +232,7 @@ video {
   display: block;
   appearance: none;
   height: 10px;
-  background: linear-gradient(to right, #6d87b6 0%, #888 50%, #8b6db6 100%);
+  background: linear-gradient(to right, #00ffc3 0%, #357f82 50%, #00ffc3 100%);
   border-radius: 5px;
   outline: none;
   cursor: pointer;
@@ -253,8 +253,8 @@ video {
   -webkit-appearance: none;
   width: 44px;
   height: 44px;
-  background: #333333 url('../assets/images/N16FF.png') no-repeat center;
-  background-size: contain;
+  background: #333333 url('../assets/images/imagen01.png') no-repeat center;
+  background-size: cover;
   border: 2px solid #b5cfcf;
   border-radius: 50%;
   cursor: grab;
@@ -265,7 +265,7 @@ video {
 #audio-fader::-webkit-slider-thumb:hover {
   width: 48px;
   height: 48px;
-  box-shadow: 0 4px 12px rgba(109, 135, 182, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 255, 195, 0.5);
 }
 
 #audio-fader::-webkit-slider-thumb:active {
@@ -278,8 +278,8 @@ video {
 #audio-fader::-moz-range-thumb {
   width: 44px;
   height: 44px;
-  background: #333333 url('../assets/images/N16FF.png') no-repeat center;
-  background-size: contain;
+  background: #333333 url('../assets/images/imagen01.png') no-repeat center;
+  background-size: cover;
   border: 2px solid #b5cfcf;
   border-radius: 50%;
   cursor: grab;
@@ -290,7 +290,7 @@ video {
 #audio-fader::-moz-range-thumb:hover {
   width: 48px;
   height: 48px;
-  box-shadow: 0 4px 12px rgba(109, 135, 182, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 255, 195, 0.5);
 }
 
 #audio-fader::-moz-range-thumb:active {
