@@ -8,10 +8,12 @@ const videoSource = document.getElementById("video-source");
 const musicAudio = document.getElementById("music-audio");
 const sfxAudio = document.getElementById("sfx-audio");
 const audioFader = document.getElementById("audio-fader");
+const audioFaderFullscreen = document.getElementById("audio-fader-fullscreen");
 const videoContainer = document.getElementById("video-container");
 const playIcon = document.getElementById("play-icon");
 const pauseIcon = document.getElementById("pause-icon");
 const loadingSpinner = document.getElementById("loading-spinner");
+const fullscreenBtn = document.getElementById("fullscreen-btn");
 
 // Loading state
 let isVideoReady = false;
@@ -56,6 +58,30 @@ function loadVideoForDevice() {
 
 // Load video on init
 loadVideoForDevice();
+
+// ========================================
+// AUDIO PRELOAD (Desktop fix)
+// ========================================
+
+// Force audio preload
+musicAudio.load();
+sfxAudio.load();
+
+// Set initial volumes based on fader
+const faderValue = parseFloat(audioFader.value);
+musicAudio.volume = 1 - faderValue;
+sfxAudio.volume = faderValue;
+
+console.log("🎵 Audio elements preloading...");
+
+// Log when audios are ready
+musicAudio.addEventListener('canplaythrough', () => {
+  console.log("✅ Music audio ready");
+}, { once: true });
+
+sfxAudio.addEventListener('canplaythrough', () => {
+  console.log("✅ SFX audio ready");
+}, { once: true });
 
 // ========================================
 // PRELOAD & LOADING
@@ -169,6 +195,76 @@ video.addEventListener("pause", updatePlayPauseUI);
 updatePlayPauseUI();
 
 // ========================================
+// AUTO-HIDE CONTROLS
+// ========================================
+
+let hideControlsTimeout = null;
+let mouseMoveTimeout = null;
+
+/**
+ * Hide controls after 1 second of playing
+ */
+function scheduleHideControls() {
+  // Clear any existing timeout
+  if (hideControlsTimeout) {
+    clearTimeout(hideControlsTimeout);
+  }
+  
+  // Remove hide-controls class immediately
+  videoContainer.classList.remove('hide-controls');
+  
+  // Schedule hiding controls after 1 second
+  hideControlsTimeout = setTimeout(() => {
+    if (!video.paused) {
+      videoContainer.classList.add('hide-controls');
+    }
+  }, 1000);
+}
+
+/**
+ * Show controls when user interacts (throttled)
+ */
+function showControls() {
+  if (!mouseMoveTimeout) {
+    videoContainer.classList.remove('hide-controls');
+    scheduleHideControls();
+    
+    // Throttle: only allow once every 100ms
+    mouseMoveTimeout = setTimeout(() => {
+      mouseMoveTimeout = null;
+    }, 100);
+  }
+}
+
+// Trigger auto-hide when video plays
+video.addEventListener("play", () => {
+  scheduleHideControls();
+});
+
+// Show controls when paused
+video.addEventListener("pause", () => {
+  if (hideControlsTimeout) {
+    clearTimeout(hideControlsTimeout);
+  }
+  videoContainer.classList.remove('hide-controls');
+});
+
+// Show controls on mouse movement (throttled)
+videoContainer.addEventListener("mousemove", () => {
+  if (!video.paused) {
+    showControls();
+  }
+});
+
+// Show controls on touch (once per touch)
+videoContainer.addEventListener("touchstart", () => {
+  if (!video.paused) {
+    videoContainer.classList.remove('hide-controls');
+    scheduleHideControls();
+  }
+}, { passive: true });
+
+// ========================================
 // SYNCHRONIZATION LOGIC
 // ========================================
 
@@ -209,14 +305,28 @@ video.addEventListener("play", () => {
   // Sync before playing
   fullSync();
   
-  // Play audios
-  musicAudio.play().catch(err => {
-    console.warn("⚠️ Music autoplay blocked by browser. User interaction required:", err);
-  });
+  // Play audios with retry mechanism
+  const playAudio = (audio, name) => {
+    const attemptPlay = () => {
+      audio.play()
+        .then(() => {
+          console.log(`✅ ${name} playing`);
+        })
+        .catch(err => {
+          console.warn(`⚠️ ${name} play failed, retrying...`, err);
+          // Retry after a short delay
+          setTimeout(() => {
+            if (!video.paused) {
+              attemptPlay();
+            }
+          }, 100);
+        });
+    };
+    attemptPlay();
+  };
   
-  sfxAudio.play().catch(err => {
-    console.warn("⚠️ SFX autoplay blocked by browser. User interaction required:", err);
-  });
+  playAudio(musicAudio, "Music");
+  playAudio(sfxAudio, "SFX");
 });
 
 /**
@@ -248,9 +358,15 @@ video.addEventListener("ended", () => {
 });
 
 /**
- * Time update handler - tolerance-based sync
+ * Time update handler - tolerance-based sync (throttled)
  */
+let lastSyncTime = 0;
 video.addEventListener("timeupdate", () => {
+  const now = Date.now();
+  // Throttle: only sync every 250ms to reduce CPU usage
+  if (now - lastSyncTime < 250) return;
+  lastSyncTime = now;
+  
   const tolerance = 0.15; // Only update if drift > 0.15 seconds
   const videoTime = video.currentTime;
   
@@ -277,6 +393,7 @@ video.addEventListener("timeupdate", () => {
  */
 function setFaderValue(value) {
   audioFader.value = value;
+  audioFaderFullscreen.value = value; // Sync fullscreen fader
   
   // Fader logic:
   // - When fader <= 0.5: Music = 0.5, SFX scales from 0 to 0.5
@@ -291,11 +408,39 @@ function setFaderValue(value) {
 }
 
 /**
- * Fader input handler
+ * Fader input handler (normal view)
  */
 audioFader.addEventListener("input", () => {
   const faderValue = parseFloat(audioFader.value);
   setFaderValue(faderValue);
+});
+
+/**
+ * Fader input handler (fullscreen view) - throttled
+ */
+let faderFullscreenTimeout = null;
+audioFaderFullscreen.addEventListener("input", () => {
+  if (!faderFullscreenTimeout) {
+    const faderValue = parseFloat(audioFaderFullscreen.value);
+    setFaderValue(faderValue);
+    
+    faderFullscreenTimeout = setTimeout(() => {
+      faderFullscreenTimeout = null;
+    }, 16); // ~60fps
+  }
+});
+
+// Prevent fader clicks from triggering video play/pause
+audioFaderFullscreen.addEventListener('mousedown', (e) => {
+  e.stopPropagation();
+}, { passive: true });
+
+audioFaderFullscreen.addEventListener('touchstart', (e) => {
+  e.stopPropagation();
+}, { passive: true });
+
+audioFaderFullscreen.addEventListener('click', (e) => {
+  e.stopPropagation();
 });
 
 // ========================================
@@ -402,6 +547,59 @@ video.addEventListener('play', () => {
   if (!videoStarted && !faderInteracted) {
     videoStarted = true;
     scheduleFaderHint(6000); // 6 seconds after first play
+  }
+});
+
+// ========================================
+// FULLSCREEN FUNCTIONALITY
+// ========================================
+
+/**
+ * Toggle fullscreen mode
+ */
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    // Enter fullscreen
+    videoContainer.requestFullscreen().catch(err => {
+      console.warn("⚠️ Error attempting to enable fullscreen:", err);
+    });
+  } else {
+    // Exit fullscreen
+    document.exitFullscreen();
+  }
+}
+
+// Fullscreen button click (both click and touch)
+fullscreenBtn.addEventListener('click', (e) => {
+  e.stopPropagation(); // Prevent triggering video play/pause
+  e.preventDefault(); // Prevent default touch behavior
+  toggleFullscreen();
+});
+
+fullscreenBtn.addEventListener('touchend', (e) => {
+  e.stopPropagation(); // Prevent triggering video play/pause
+  e.preventDefault(); // Prevent default and avoid double-firing with click
+  toggleFullscreen();
+});
+
+// Update button icon when fullscreen state changes
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement) {
+    // Change to exit fullscreen icon
+    fullscreenBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+        <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+      </svg>
+    `;
+    console.log("🖥️ Entered fullscreen mode");
+  } else {
+    // Change to enter fullscreen icon
+    fullscreenBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+      </svg>
+    `;
+    console.log("🖥️ Exited fullscreen mode");
   }
 });
 

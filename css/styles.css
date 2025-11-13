@@ -45,12 +45,28 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Fullscreen optimizations */
+#video-container:fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  background-color: #000;
+}
+
 video {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain; /* Mantiene aspect ratio sin estirar */
   pointer-events: none;
+  transform: translateZ(0); /* Force GPU acceleration */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Loading Overlay */
@@ -121,15 +137,163 @@ video {
   background: rgba(0, 0, 0, 0.7);
 }
 
-/* Hide overlay when video is playing (except on hover) */
+/* Hide PAUSE icon specifically */
+#pause-icon {
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* When playing, hide the entire overlay (circle + icons) */
 #video-container.playing .play-pause-overlay {
-  opacity: 0;
+  opacity: 0 !important;
+  pointer-events: none;
   transition: opacity 0.5s;
 }
 
+/* Auto-hide controls after 1 second */
+#video-container.playing.hide-controls .play-pause-overlay {
+  opacity: 0 !important;
+  pointer-events: none;
+  transition: opacity 1s;
+}
+
+#video-container.playing.hide-controls .fullscreen-button {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1s;
+}
+
+/* Show on hover/touch */
 #video-container.playing:hover .play-pause-overlay,
 #video-container.playing video:hover ~ .play-pause-overlay {
   opacity: 1;
+  pointer-events: all;
+}
+
+#video-container:hover .fullscreen-button,
+#video-container.playing:not(.hide-controls) .fullscreen-button {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Fullscreen Button */
+.fullscreen-button {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #00ffc3;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 20;
+  padding: 0;
+}
+
+.fullscreen-button:hover {
+  background: rgba(0, 255, 195, 0.2);
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(0, 255, 195, 0.4);
+}
+
+.fullscreen-button:active {
+  transform: scale(0.95);
+}
+
+.fullscreen-button svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* Fader Controls in Fullscreen */
+.fader-controls-fullscreen {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translate3d(-50%, 0, 0); /* Use 3D transform for GPU */
+  width: 80%;
+  max-width: 600px;
+  padding: 0 20px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 25;
+  will-change: opacity; /* Hint browser to optimize */
+}
+
+/* Show fader in fullscreen */
+#video-container:fullscreen .fader-controls-fullscreen {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Style for fullscreen fader */
+#audio-fader-fullscreen {
+  width: 100%;
+  display: block;
+  appearance: none;
+  height: 12px;
+  background: linear-gradient(to right, #357f82 0%, #00ffc3 25%, #357f82 50%, #00ffc3 75%, #357f82 100%);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  transition: none; /* Remove transition to reduce lag */
+}
+
+#audio-fader-fullscreen:hover {
+  opacity: 0.9;
+}
+
+#audio-fader-fullscreen::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 50px;
+  height: 50px;
+  background: #333333 url('../assets/images/image01.png') no-repeat center;
+  background-size: 70%;
+  border: 2px solid #b5cfcf;
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+  transition: none; /* Remove transition to reduce lag */
+}
+
+#audio-fader-fullscreen::-webkit-slider-thumb:hover {
+  width: 54px;
+  height: 54px;
+  box-shadow: 0 4px 16px rgba(0, 255, 195, 0.6);
+}
+
+#audio-fader-fullscreen::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  width: 56px;
+  height: 56px;
+}
+
+#audio-fader-fullscreen::-moz-range-thumb {
+  width: 50px;
+  height: 50px;
+  background: #333333 url('../assets/images/image01.png') no-repeat center;
+  background-size: 70%;
+  border: 2px solid #b5cfcf;
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+  transition: none; /* Remove transition to reduce lag */
+}
+
+#audio-fader-fullscreen::-moz-range-thumb:hover {
+  width: 54px;
+  height: 54px;
+  box-shadow: 0 4px 16px rgba(0, 255, 195, 0.6);
+}
+
+#audio-fader-fullscreen::-moz-range-thumb:active {
+  cursor: grabbing;
+  width: 56px;
+  height: 56px;
 }
 
 /* Fader Controls Container */
@@ -168,6 +332,7 @@ video {
   font-weight: 600;
   padding: 10px 16px;
   border-radius: 8px;
+  border: 2px solid #00ffc3;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
   white-space: nowrap;
@@ -232,7 +397,7 @@ video {
   display: block;
   appearance: none;
   height: 10px;
-  background: linear-gradient(to right, #00ffc3 0%, #357f82 50%, #00ffc3 100%);
+  background: linear-gradient(to right, #357f82 0%, #04b98f 25%, #357f82 50%, #04b98f 75%, #357f82 100%);
   border-radius: 5px;
   outline: none;
   cursor: pointer;
@@ -253,8 +418,8 @@ video {
   -webkit-appearance: none;
   width: 44px;
   height: 44px;
-  background: #333333 url('../assets/images/imagen01.png') no-repeat center;
-  background-size: cover;
+  background: #333333 url('../assets/images/image01.png') no-repeat center;
+  background-size: 70%;
   border: 2px solid #b5cfcf;
   border-radius: 50%;
   cursor: grab;
@@ -278,8 +443,8 @@ video {
 #audio-fader::-moz-range-thumb {
   width: 44px;
   height: 44px;
-  background: #333333 url('../assets/images/imagen01.png') no-repeat center;
-  background-size: cover;
+  background: #333333 url('../assets/images/image01.png') no-repeat center;
+  background-size: 70%;
   border: 2px solid #b5cfcf;
   border-radius: 50%;
   cursor: grab;
@@ -348,6 +513,19 @@ video {
   #audio-fader::-moz-range-thumb:active {
     width: 48px;
     height: 48px;
+  }
+  
+  /* Fullscreen button larger on mobile */
+  .fullscreen-button {
+    width: 50px;
+    height: 50px;
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .fullscreen-button svg {
+    width: 28px;
+    height: 28px;
   }
 }
 
