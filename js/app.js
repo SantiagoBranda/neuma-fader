@@ -174,6 +174,10 @@ function togglePlayPause() {
   }
   
   if (video.paused) {
+    // Force audio load on user interaction (iframe compatibility)
+    console.log("🎵 User initiated play - force loading audio");
+    musicAudio.load();
+    sfxAudio.load();
     video.play();
   } else {
     video.pause();
@@ -181,8 +185,19 @@ function togglePlayPause() {
 }
 
 // Click/Touch on video container
-videoContainer.addEventListener("click", togglePlayPause);
+videoContainer.addEventListener("click", (e) => {
+  // Ignore clicks on slider or fullscreen button
+  if (e.target.closest('#audio-fader') || e.target.closest('.fullscreen-button')) {
+    return;
+  }
+  togglePlayPause();
+});
+
 videoContainer.addEventListener("touchend", (e) => {
+  // Ignore touches on slider or fullscreen button
+  if (e.target.closest('#audio-fader') || e.target.closest('.fullscreen-button')) {
+    return;
+  }
   e.preventDefault();
   togglePlayPause();
 });
@@ -292,34 +307,44 @@ video.addEventListener("play", () => {
     return;
   }
   
-  // Load audios if not loaded (desktop fix)
-  if (musicAudio.readyState < 2) {
-    console.log("📥 Loading music audio...");
+  // Force load audios if not ready
+  if (musicAudio.readyState < 3) {
+    console.log("📥 Force loading music audio...");
     musicAudio.load();
   }
-  if (sfxAudio.readyState < 2) {
-    console.log("📥 Loading SFX audio...");
+  if (sfxAudio.readyState < 3) {
+    console.log("📥 Force loading SFX audio...");
     sfxAudio.load();
   }
   
   // Sync before playing
   fullSync();
   
-  // Play audios with retry mechanism
+  // Play audios with aggressive retry mechanism
   const playAudio = (audio, name) => {
+    let retryCount = 0;
+    const maxRetries = 5;
+    
     const attemptPlay = () => {
       audio.play()
         .then(() => {
-          console.log(`✅ ${name} playing`);
+          console.log(`✅ ${name} playing successfully`);
         })
         .catch(err => {
-          console.warn(`⚠️ ${name} play failed, retrying...`, err);
-          // Retry after a short delay
-          setTimeout(() => {
-            if (!video.paused) {
-              attemptPlay();
-            }
-          }, 100);
+          retryCount++;
+          console.warn(`⚠️ ${name} play failed (attempt ${retryCount}/${maxRetries}):`, err.message);
+          
+          if (retryCount < maxRetries && !video.paused) {
+            // Try loading again before retry
+            audio.load();
+            setTimeout(() => {
+              if (!video.paused) {
+                attemptPlay();
+              }
+            }, 200);
+          } else {
+            console.error(`❌ ${name} failed after ${maxRetries} attempts`);
+          }
         });
     };
     attemptPlay();
@@ -439,6 +464,10 @@ audioFaderFullscreen.addEventListener('touchstart', (e) => {
   e.stopPropagation();
 }, { passive: true });
 
+audioFaderFullscreen.addEventListener('touchend', (e) => {
+  e.stopPropagation();
+}, { passive: true });
+
 audioFaderFullscreen.addEventListener('click', (e) => {
   e.stopPropagation();
 });
@@ -532,6 +561,9 @@ function onFaderInteraction() {
 // Hide hint on user actions
 audioFader.addEventListener('mousedown', onFaderInteraction);
 audioFader.addEventListener('touchstart', onFaderInteraction);
+audioFader.addEventListener('touchend', (e) => {
+  e.stopPropagation();
+}, { passive: true });
 audioFader.addEventListener('input', () => {
   onFaderInteraction();
   if (faderHint && faderHint.classList.contains('visible')) updateFaderHintPosition();
@@ -600,6 +632,28 @@ document.addEventListener('fullscreenchange', () => {
       </svg>
     `;
     console.log("🖥️ Exited fullscreen mode");
+  }
+});
+
+// Detect orientation changes in fullscreen
+window.addEventListener('orientationchange', () => {
+  if (document.fullscreenElement) {
+    console.log("📱 Orientation changed in fullscreen");
+    // Small delay to let browser finish orientation change
+    setTimeout(() => {
+      // Force layout update
+      videoContainer.style.transform = 'none';
+      setTimeout(() => {
+        videoContainer.style.transform = '';
+      }, 50);
+    }, 100);
+  }
+});
+
+// Also listen to resize events (some devices use this instead)
+window.addEventListener('resize', () => {
+  if (document.fullscreenElement) {
+    console.log("📐 Resize detected in fullscreen");
   }
 });
 
