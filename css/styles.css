@@ -515,17 +515,17 @@ video {
     height: 48px;
   }
   
-  /* Fullscreen button larger on mobile */
+  /* Fullscreen button smaller on mobile */
   .fullscreen-button {
-    width: 50px;
-    height: 50px;
-    bottom: 20px;
-    right: 20px;
+    width: 36px;
+    height: 36px;
+    bottom: 12px;
+    right: 12px;
   }
   
   .fullscreen-button svg {
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
   }
 }
 
