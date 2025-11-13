@@ -589,21 +589,25 @@ video.addEventListener('play', () => {
 /**
  * Toggle fullscreen mode
  */
-function toggleFullscreen() {
+async function toggleFullscreen() {
   if (!document.fullscreenElement) {
-    // Enter fullscreen
-    videoContainer.requestFullscreen().then(() => {
-      // Try to lock orientation to landscape on mobile
+    try {
+      // Enter fullscreen first
+      await videoContainer.requestFullscreen();
+      console.log("✅ Fullscreen activated");
+      
+      // Then try to lock orientation to landscape
       if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('landscape').then(() => {
+        try {
+          await screen.orientation.lock('landscape');
           console.log("🔒 Locked to landscape orientation");
-        }).catch(err => {
-          console.warn("⚠️ Could not lock orientation:", err);
-        });
+        } catch (err) {
+          console.warn("⚠️ Could not lock orientation:", err.message);
+        }
       }
-    }).catch(err => {
+    } catch (err) {
       console.warn("⚠️ Error attempting to enable fullscreen:", err);
-    });
+    }
   } else {
     // Exit fullscreen
     document.exitFullscreen();
