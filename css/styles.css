@@ -46,7 +46,9 @@ body {
 }
 
 /* Fullscreen optimizations */
-#video-container:fullscreen {
+#video-container:fullscreen,
+#video-container:-webkit-full-screen,
+#video-container:-moz-full-screen {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,6 +69,9 @@ video {
   transform: translateZ(0); /* Force GPU acceleration */
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* Safari-specific optimizations */
+  -webkit-transform: translateZ(0);
+  will-change: transform;
 }
 
 /* Loading Overlay */
@@ -605,6 +610,22 @@ video {
     border-radius: 8px;
     max-height: calc(100vh - 140px);
   }
+  
+  /* Timeline larger on mobile for easier touch */
+  .video-timeline {
+    height: 6px;
+    bottom: 10px;
+  }
+  
+  .video-timeline::before {
+    top: -15px; /* Larger touch area */
+    bottom: -15px;
+  }
+  
+  .video-timeline:hover,
+  .video-timeline:active {
+    height: 8px;
+  }
 
   .fader-controls {
     margin-top: 25px;
@@ -638,17 +659,20 @@ video {
     height: 48px;
   }
   
-  /* Fullscreen button smaller on mobile */
+  /* Fullscreen button - positioned slightly higher to avoid timeline overlap */
   .fullscreen-button {
-    width: 36px;
-    height: 36px;
-    bottom: 12px;
-    right: 12px;
+    width: 44px;
+    height: 44px;
+    bottom: 28px; /* Just above the timeline */
+    right: 8px;
+    top: auto;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00ffc3;
   }
   
   .fullscreen-button svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
 }
 
@@ -705,6 +729,11 @@ video {
 
   #video-container {
     max-height: calc(100vh - 100px);
+  }
+  
+  /* Fullscreen button higher in landscape to avoid timeline */
+  .fullscreen-button {
+    bottom: 28px;
   }
 
   .subtitle {

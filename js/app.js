@@ -154,29 +154,43 @@ function updateTimeline() {
   }
 }
 
+// ========================================
+// SYNCHRONIZATION - Simplified & Optimized
+// ========================================
+
+const SYNC_TOLERANCE = 0.2; // Single tolerance value
+let isSeeking = false;
+
+function syncAudio() {
+  if (isSeeking) return; // Don't sync while seeking
+  
+  const videoTime = video.currentTime;
+  
+  // Only sync if ready and drift is significant
+  if (musicAudio.readyState >= 2) {
+    const drift = Math.abs(musicAudio.currentTime - videoTime);
+    if (drift > SYNC_TOLERANCE) {
+      musicAudio.currentTime = videoTime;
+    }
+  }
+  
+  if (sfxAudio.readyState >= 2) {
+    const drift = Math.abs(sfxAudio.currentTime - videoTime);
+    if (drift > SYNC_TOLERANCE) {
+      sfxAudio.currentTime = videoTime;
+    }
+  }
+}
+
+// Seeking: Let browser handle it, don't manually sync
 function seekFromTimeline(event, timelineElement) {
   const rect = timelineElement.getBoundingClientRect();
   const pos = (event.clientX - rect.left) / rect.width;
   const newTime = pos * video.duration;
   
   if (!isNaN(newTime) && newTime >= 0 && newTime <= video.duration) {
-    const wasPlaying = !video.paused;
-    
-    video.pause();
-    musicAudio.pause();
-    sfxAudio.pause();
-    
-    video.currentTime = newTime;
-    musicAudio.currentTime = newTime;
-    sfxAudio.currentTime = newTime;
-    
-    if (wasPlaying) {
-      setTimeout(() => {
-        video.play();
-        musicAudio.play().catch(err => console.warn('Music play failed:', err));
-        sfxAudio.play().catch(err => console.warn('SFX play failed:', err));
-      }, 50);
-    }
+    isSeeking = true;
+    video.currentTime = newTime; // Only set video time, let 'seeked' event handle the rest
   }
 }
 
@@ -207,12 +221,6 @@ video.addEventListener('timeupdate', updateTimeline);
 video.addEventListener('progress', updateTimeline);
 video.addEventListener('loadedmetadata', updateTimeline);
 
-function fullSync() {
-  const videoTime = video.currentTime;
-  musicAudio.currentTime = videoTime;
-  sfxAudio.currentTime = videoTime;
-}
-
 video.addEventListener("play", () => {
   if (!isVideoReady) {
     video.pause();
@@ -222,16 +230,15 @@ video.addEventListener("play", () => {
   if (musicAudio.readyState < 3) musicAudio.load();
   if (sfxAudio.readyState < 3) sfxAudio.load();
   
-  fullSync();
+  syncAudio(); // Initial sync
   
   const playAudio = (audio) => {
     let retryCount = 0;
     const attemptPlay = () => {
       audio.play().catch(err => {
         retryCount++;
-        if (retryCount < 5 && !video.paused) {
-          audio.load();
-          setTimeout(() => { if (!video.paused) attemptPlay(); }, 200);
+        if (retryCount < 3 && !video.paused) { // Reduced retries
+          setTimeout(() => { if (!video.paused) attemptPlay(); }, 150);
         }
       });
     };
@@ -247,7 +254,22 @@ video.addEventListener("pause", () => {
   sfxAudio.pause();
 });
 
-video.addEventListener("seeked", fullSync);
+video.addEventListener("seeked", () => {
+  isSeeking = false; // Re-enable auto-sync
+  
+  // Immediate sync
+  const videoTime = video.currentTime;
+  musicAudio.currentTime = videoTime;
+  sfxAudio.currentTime = videoTime;
+  
+  // Resume audio if video is playing (with shorter delay)
+  if (!video.paused) {
+    setTimeout(() => {
+      if (musicAudio.paused) musicAudio.play().catch(() => {});
+      if (sfxAudio.paused) sfxAudio.play().catch(() => {});
+    }, 10); // Very short delay, just enough for sync to complete
+  }
+});
 
 video.addEventListener("ended", () => {
   musicAudio.pause();
@@ -256,20 +278,13 @@ video.addEventListener("ended", () => {
   sfxAudio.currentTime = 0;
 });
 
+// Throttled continuous sync during playback
 video.addEventListener("timeupdate", () => {
   const now = Date.now();
-  if (now - lastSyncTime < 250) return;
+  if (now - lastSyncTime < 200) return; // Check every 200ms (was 300ms)
   lastSyncTime = now;
   
-  const tolerance = 0.15;
-  const videoTime = video.currentTime;
-  
-  if (Math.abs(musicAudio.currentTime - videoTime) > tolerance) {
-    musicAudio.currentTime = videoTime;
-  }
-  if (Math.abs(sfxAudio.currentTime - videoTime) > tolerance) {
-    sfxAudio.currentTime = videoTime;
-  }
+  syncAudio(); // Use unified sync function
 });
 
 function setFaderValue(value) {
@@ -388,15 +403,48 @@ video.addEventListener('play', () => {
   }
 });
 
+// ========================================
+// FULLSCREEN - iOS/Safari Compatible
+// ========================================
+
 async function toggleFullscreen() {
-  if (!document.fullscreenElement) {
+  // Check if already in fullscreen (cross-browser)
+  const isFullscreen = document.fullscreenElement || 
+                       document.webkitFullscreenElement || 
+                       document.mozFullScreenElement;
+  
+  if (!isFullscreen) {
     try {
-      await videoContainer.requestFullscreen();
+      // Try standard API first
+      if (videoContainer.requestFullscreen) {
+        await videoContainer.requestFullscreen();
+      } 
+      // Safari iOS/macOS
+      else if (videoContainer.webkitRequestFullscreen) {
+        await videoContainer.webkitRequestFullscreen();
+      }
+      // Firefox
+      else if (videoContainer.mozRequestFullScreen) {
+        await videoContainer.mozRequestFullScreen();
+      }
+      // Safari on iPhone - use video element
+      else if (video.webkitEnterFullscreen) {
+        video.webkitEnterFullscreen();
+      }
     } catch (err) {
       console.warn("Fullscreen error:", err);
     }
   } else {
-    document.exitFullscreen();
+    // Exit fullscreen (cross-browser)
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (video.webkitExitFullscreen) {
+      video.webkitExitFullscreen();
+    }
   }
 }
 
@@ -412,20 +460,27 @@ fullscreenBtn.addEventListener('touchend', (e) => {
   toggleFullscreen();
 });
 
-document.addEventListener('fullscreenchange', () => {
-  if (document.fullscreenElement) {
-    fullscreenBtn.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-        <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
-      </svg>
-    `;
-  } else {
-    fullscreenBtn.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-      </svg>
-    `;
-  }
+// Listen to fullscreen changes (cross-browser)
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange'].forEach(event => {
+  document.addEventListener(event, () => {
+    const isFullscreen = document.fullscreenElement || 
+                         document.webkitFullscreenElement || 
+                         document.mozFullScreenElement;
+    
+    if (isFullscreen) {
+      fullscreenBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+          <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+        </svg>
+      `;
+    } else {
+      fullscreenBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+          <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+        </svg>
+      `;
+    }
+  });
 });
 
 function init() {
