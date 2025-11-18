@@ -59,12 +59,28 @@ function hideLoading() {
 video.addEventListener("loadstart", showLoading);
 video.addEventListener("canplay", hideLoading);
 video.addEventListener("canplaythrough", hideLoading);
+
 video.addEventListener("waiting", () => {
+  console.log("⏳ Video buffering...");
   showLoading();
+  // Pause audio while video buffers to avoid desync
   musicAudio.pause();
   sfxAudio.pause();
 });
-video.addEventListener("playing", hideLoading);
+
+video.addEventListener("playing", () => {
+  hideLoading();
+  // Resume audio when video continues playing after buffering
+  if (musicAudio.paused && !video.paused) {
+    // Sync audio to video time before resuming
+    const videoTime = video.currentTime;
+    musicAudio.currentTime = videoTime;
+    sfxAudio.currentTime = videoTime;
+    
+    musicAudio.play().catch(() => {});
+    sfxAudio.play().catch(() => {});
+  }
+});
 
 function updatePlayPauseUI() {
   if (video.paused) {
@@ -77,11 +93,23 @@ function updatePlayPauseUI() {
 }
 
 function togglePlayPause() {
-  if (!isVideoReady && video.paused) return;
+  // Don't allow play if video is not ready or still loading
+  if (!isVideoReady && video.paused) {
+    console.log("⚠️ Video not ready yet");
+    return;
+  }
+  
+  // Don't allow play if video is buffering
+  if (video.readyState < 3 && video.paused) {
+    console.log("⚠️ Video still buffering, please wait...");
+    showLoading(); // Show loading indicator
+    return;
+  }
   
   if (video.paused) {
-    musicAudio.load();
-    sfxAudio.load();
+    // Only load audio if needed
+    if (musicAudio.readyState < 2) musicAudio.load();
+    if (sfxAudio.readyState < 2) sfxAudio.load();
     video.play();
   } else {
     video.pause();
